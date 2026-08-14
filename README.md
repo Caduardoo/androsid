@@ -17,7 +17,7 @@ Then launch the app and grant camera + location + notifications. There is no UI:
 opening the app starts streaming, closing it stops. The notification is your
 indicator that it's alive.
 
-## Setting up a ROS 2 Environment on your Device
+## Setting up a ROS 2 environment on your device
 
 Install [Termux](https://f-droid.org/packages/com.termux/) app on your android device, and inside it, set up [`proot-distro`](https://github.com/termux/proot-distro):
 
