@@ -17,6 +17,9 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
@@ -59,6 +62,8 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
     private var camera: CameraSource? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var multicastLock: WifiManager.MulticastLock? = null
+    private var sensorThread: HandlerThread? = null
+    private var loggedFirstFix = false
 
     override fun onCreate() {
         super.onCreate()
@@ -85,8 +90,15 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             }
         Log.i(TAG, "multicast lock acquired, DDS discovery should reach this device")
 
-        startImu()
-        startGps()
+        // Sensor and location callbacks default to the main looper, and every one of
+        // them ends in a blocking socket write -- which Android answers with
+        // NetworkOnMainThreadException. Give both a background looper instead. This
+        // also keeps a stalled consumer from freezing the UI thread.
+        val thread = HandlerThread("androsid-sensors").also { it.start() }
+        sensorThread = thread
+
+        startImu(Handler(thread.looper))
+        startGps(thread.looper)
         startCamera()
     }
 
@@ -97,6 +109,10 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             (getSystemService(Context.LOCATION_SERVICE) as LocationManager)
                 .removeUpdates(this)
         } catch (_: SecurityException) {}
+        // Both listeners are unregistered above, so no callback can be mid-flight.
+        // quitSafely lets already-queued messages finish rather than dropping them.
+        sensorThread?.quitSafely()
+        sensorThread = null
         wakeLock?.takeIf { it.isHeld }?.release()
         multicastLock?.takeIf { it.isHeld }?.release()
         server.stop()
@@ -105,7 +121,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
 
     // ---------------------------------------------------------------- sources
 
-    private fun startImu() {
+    private fun startImu(handler: Handler) {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val types = listOf(
             Sensor.TYPE_ACCELEROMETER,
@@ -118,22 +134,32 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 Log.w(TAG, "no sensor of type $type on this device")
                 continue
             }
-            sensorManager.registerListener(this, sensor, SENSOR_PERIOD_US)
+            sensorManager.registerListener(this, sensor, SENSOR_PERIOD_US, handler)
         }
     }
 
-    private fun startGps() {
+    private fun startGps(looper: Looper) {
         if (!hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
             Log.w(TAG, "location permission not granted, GPS disabled")
             return
         }
         val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        // GPS_PROVIDER is satellite-only, so it publishes nothing indoors. FUSED
+        // blends GNSS with Wi-Fi and cell trilateration and will produce a coarse
+        // fix at a desk. It needs API 31; below that there is nothing to fall back
+        // to but raw GNSS. Either way the provider name goes out on the wire so the
+        // bridge can tell a 5 m satellite fix from a 25 m trilaterated one.
+        val provider = if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            lm.allProviders.contains(LocationManager.FUSED_PROVIDER)
+        ) LocationManager.FUSED_PROVIDER else LocationManager.GPS_PROVIDER
+
         try {
-            lm.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, LOCATION_PERIOD_MS, 0f, this
-            )
+            lm.requestLocationUpdates(provider, LOCATION_PERIOD_MS, 0f, this, looper)
+            Log.i(TAG, "location updates requested from '$provider'")
         } catch (e: Exception) {
-            Log.e(TAG, "could not start GPS updates", e)
+            Log.e(TAG, "could not start location updates", e)
         }
     }
 
@@ -172,10 +198,16 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         val vertAcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             loc.verticalAccuracyMeters.toDouble() else 0.0
 
+        if (!loggedFirstFix) {
+            loggedFirstFix = true
+            Log.i(TAG, "first fix from '${loc.provider}', accuracy ${loc.accuracy} m")
+        }
+
         server.broadcastJson(
             """{"s":"gps","t":$t,"lat":${loc.latitude},"lon":${loc.longitude},""" +
             """"alt":${loc.altitude},"acc":${loc.accuracy},"vacc":$vertAcc,""" +
-            """"speed":${loc.speed},"bearing":${loc.bearing}}"""
+            """"speed":${loc.speed},"bearing":${loc.bearing},""" +
+            """"prov":"${loc.provider}"}"""
         )
     }
 
