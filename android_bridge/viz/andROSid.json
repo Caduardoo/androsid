@@ -140,7 +140,93 @@
       ],
       "foxglovePanelTitle": "IMU Data"
     },
-    "Image!191qot": {
+    "3D!wxdx66": {
+      "cameraState": {
+        "perspective": true,
+        "distance": 1.8893648827544989,
+        "phi": 51.94630872483357,
+        "thetaOffset": -43.590604026845085,
+        "targetOffset": [
+          0.11932782298556599,
+          -0.0060489569804674905,
+          2.871058647611768e-17
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {
+        "frame:odom": {
+          "visible": false
+        }
+      },
+      "topics": {},
+      "layers": {
+        "grid": {
+          "visible": true,
+          "drawBehind": false,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "9524711a-f6ef-4749-8926-7558207d4284",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    },
+    "map!my4bsj": {
+      "customTileUrl": "",
+      "disabledTopics": [],
+      "followTopic": "",
+      "followFrame": "",
+      "layer": "map",
+      "topicColors": {},
+      "zoomLevel": 19,
+      "maxNativeZoom": 18,
+      "topicConfig": {
+        "/gps/fix": {
+          "historyMode": "all",
+          "pointDisplayMode": "dot",
+          "pointSize": 6
+        }
+      }
+    },
+    "Image!1iywx5i": {
       "cameraState": {
         "distance": 20,
         "perspective": true,
@@ -182,90 +268,7 @@
       },
       "imageMode": {
         "imageTopic": "/camera/image_raw/compressed"
-      },
-      "foxglovePanelTitle": "Camera Feed"
-    },
-    "map!my4bsj": {
-      "customTileUrl": "",
-      "disabledTopics": [],
-      "followTopic": "",
-      "followFrame": "",
-      "layer": "map",
-      "topicColors": {},
-      "zoomLevel": 19,
-      "maxNativeZoom": 18,
-      "topicConfig": {
-        "/gps/fix": {
-          "historyMode": "all",
-          "pointDisplayMode": "dot",
-          "pointSize": 6
-        }
       }
-    },
-    "3D!lehqk7": {
-      "cameraState": {
-        "perspective": true,
-        "distance": 6.8112325257622075,
-        "phi": 60.000000000000085,
-        "thetaOffset": 45.000000000000284,
-        "targetOffset": [
-          -0.2856324035518414,
-          -0.24992835310785738,
-          2.5226397155951086e-17
-        ],
-        "target": [
-          0,
-          0,
-          0
-        ],
-        "targetOrientation": [
-          0,
-          0,
-          0,
-          1
-        ],
-        "fovy": 45,
-        "near": 0.5,
-        "far": 5000
-      },
-      "followMode": "follow-pose",
-      "scene": {},
-      "transforms": {},
-      "topics": {},
-      "layers": {
-        "grid": {
-          "visible": true,
-          "drawBehind": false,
-          "frameLocked": true,
-          "label": "Grid",
-          "instanceId": "183a57b7-efb3-455a-bec9-89aaca7382bd",
-          "layerId": "foxglove.Grid",
-          "size": 10,
-          "divisions": 10,
-          "lineWidth": 1,
-          "color": "#248eff",
-          "position": [
-            0,
-            0,
-            0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ]
-        }
-      },
-      "publish": {
-        "type": "point",
-        "poseTopic": "/move_base_simple/goal",
-        "pointTopic": "/clicked_point",
-        "poseEstimateTopic": "/initialpose",
-        "poseEstimateXDeviation": 0.5,
-        "poseEstimateYDeviation": 0.5,
-        "poseEstimateThetaDeviation": 0.26179939
-      },
-      "imageMode": {}
     }
   },
   "globalVariables": {},
@@ -277,12 +280,13 @@
     "first": "Stack!3pftptn",
     "second": {
       "first": {
-        "first": "Image!191qot",
-        "second": "3D!lehqk7",
+        "first": "Image!1iywx5i",
+        "second": "3D!wxdx66",
         "direction": "column"
       },
       "second": "map!my4bsj",
-      "direction": "row"
+      "direction": "row",
+      "splitPercentage": 42.73443092340731
     },
     "direction": "row",
     "splitPercentage": 24.73060344827586
