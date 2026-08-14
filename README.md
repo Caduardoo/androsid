@@ -19,7 +19,7 @@ indicator that it's alive.
 
 ## Setting up a ROS 2 Environment on your Device
 
-Install Termux app on your android device, and inside it, set up [`proot-distro`](https://github.com/termux/proot-distro):
+Install [Termux](https://f-droid.org/packages/com.termux/) app on your android device, and inside it, set up [`proot-distro`](https://github.com/termux/proot-distro):
 
 ```bash
 pkg install proot-distro
