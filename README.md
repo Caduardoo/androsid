@@ -9,7 +9,7 @@ sensor rather than at the moment a pipe happened to be scheduled.
 
 ## Building the app
 
-Open the `andROSid/` folder in Android Studio and hit `Run` with the phone connected
+Open the `andROSid/android` folder in Android Studio and hit `Run` with the phone connected
 over USB debugging. Ensure your Android device has Developer Options unlocked and
 USB debugging enabled there.
 
