@@ -1,0 +1,290 @@
+{
+  "configById": {
+    "Plot!1su5own": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/data_raw.angular_velocity.x",
+          "enabled": true,
+          "color": "#4e98e2",
+          "id": "db14b03f-1cbc-4650-95ff-48f87639d6c5",
+          "label": "Roll Rate"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/data_raw.angular_velocity.y",
+          "enabled": true,
+          "color": "#f5774d",
+          "id": "5a0c331e-2bc2-4b5d-9dd2-a70acf65fd31",
+          "label": "Pitch Rate"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/data_raw.angular_velocity.z",
+          "enabled": true,
+          "color": "#f7df71",
+          "id": "a946678a-49a3-47df-a7f0-d18ebdfc99c4",
+          "label": "Yaw Rate"
+        }
+      ],
+      "minYValue": -10,
+      "maxYValue": 10,
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Gyroscope",
+      "yAxisLabel": "ras/s",
+      "xAxisLabel": "s"
+    },
+    "Plot!4eikhsh": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/data_raw.linear_acceleration.x",
+          "enabled": true,
+          "color": "#4e98e2",
+          "id": "bc916029-4012-4c6a-8e2a-caf537a67898",
+          "label": "X"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/data_raw.linear_acceleration.y",
+          "enabled": true,
+          "color": "#f5774d",
+          "id": "fd542be5-fcf6-453d-b6b3-aab0f2dd7549",
+          "label": "Y"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/data_raw.linear_acceleration.z",
+          "enabled": true,
+          "color": "#f7df71",
+          "id": "0bf1d772-0345-4e94-a4d1-a0978a8267f9",
+          "label": "Z"
+        }
+      ],
+      "minYValue": -20,
+      "maxYValue": 20,
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Accelerometer",
+      "xAxisLabel": "s",
+      "yAxisLabel": "m/s²"
+    },
+    "Plot!3faj5iy": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/mag.magnetic_field.x",
+          "enabled": true,
+          "color": "#4e98e2",
+          "id": "339be422-e297-4b6c-9d9f-d49fbb00ccb8",
+          "label": "X"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/mag.magnetic_field.y",
+          "enabled": true,
+          "color": "#f5774d",
+          "id": "0bb4f454-ffd7-44a2-a401-aa835b67f91e",
+          "label": "Y"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/imu/mag.magnetic_field.z",
+          "enabled": true,
+          "color": "#f7df71",
+          "id": "1cc645c0-9924-469f-9c07-2b7ba41530d8",
+          "label": "Z"
+        }
+      ],
+      "minYValue": -0.00005,
+      "maxYValue": 0.00005,
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Magnetometer",
+      "yAxisLabel": "Tesla",
+      "xAxisLabel": "s"
+    },
+    "Stack!3pftptn": {
+      "panels": [
+        {
+          "panelId": "Plot!1su5own",
+          "size": 0.3363522903595765
+        },
+        {
+          "panelId": "Plot!4eikhsh",
+          "size": 0.33311407947109223
+        },
+        {
+          "panelId": "Plot!3faj5iy",
+          "size": 0.3331140794710924
+        }
+      ],
+      "foxglovePanelTitle": "IMU Data"
+    },
+    "Image!191qot": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {
+        "imageTopic": "/camera/image_raw/compressed"
+      },
+      "foxglovePanelTitle": "Camera Feed"
+    },
+    "map!my4bsj": {
+      "customTileUrl": "",
+      "disabledTopics": [],
+      "followTopic": "",
+      "followFrame": "",
+      "layer": "map",
+      "topicColors": {},
+      "zoomLevel": 19,
+      "maxNativeZoom": 18,
+      "topicConfig": {
+        "/gps/fix": {
+          "historyMode": "all",
+          "pointDisplayMode": "dot",
+          "pointSize": 6
+        }
+      }
+    },
+    "3D!lehqk7": {
+      "cameraState": {
+        "perspective": true,
+        "distance": 6.8112325257622075,
+        "phi": 60.000000000000085,
+        "thetaOffset": 45.000000000000284,
+        "targetOffset": [
+          -0.2856324035518414,
+          -0.24992835310785738,
+          2.5226397155951086e-17
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {
+        "grid": {
+          "visible": true,
+          "drawBehind": false,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "183a57b7-efb3-455a-bec9-89aaca7382bd",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "first": "Stack!3pftptn",
+    "second": {
+      "first": {
+        "first": "Image!191qot",
+        "second": "3D!lehqk7",
+        "direction": "column"
+      },
+      "second": "map!my4bsj",
+      "direction": "row"
+    },
+    "direction": "row",
+    "splitPercentage": 24.73060344827586
+  }
+}
