@@ -66,6 +66,7 @@ class MobileSensors(Node):
         # recent accel and emit a combined Imu when the gyro sample lands.
         self._last_accel = None
         self._warned_units = False
+        self._logged_provider = False
 
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -175,11 +176,26 @@ class MobileSensors(Node):
         self.pub_mag.publish(msg)
 
     def _on_gps(self, sample):
+        provider = sample.get("prov", "gps")
+
+        if not self._logged_provider:
+            self._logged_provider = True
+            self.get_logger().info(
+                f"first fix from '{provider}', "
+                f"horizontal accuracy {float(sample.get('acc', 0.0)):.1f} m"
+            )
+
         msg = NavSatFix()
         msg.header.stamp = to_ros_time(sample["t"])
         msg.header.frame_id = self.gps_frame
         msg.status.status = NavSatStatus.STATUS_FIX
-        msg.status.service = NavSatStatus.SERVICE_GPS
+        # `service` is a bitmask of the GNSS constellations used. A Wi-Fi or cell
+        # trilaterated fix used none of them, so claiming SERVICE_GPS would lie to
+        # anything downstream that branches on it. The covariance below still
+        # carries the real uncertainty either way.
+        msg.status.service = (
+            NavSatStatus.SERVICE_GPS if provider == "gps" else 0
+        )
         msg.latitude = float(sample["lat"])
         msg.longitude = float(sample["lon"])
         msg.altitude = float(sample["alt"])
