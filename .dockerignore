@@ -1,0 +1,8 @@
+android/
+docker/
+.git/
+**/__pycache__/
+**/*.pyc
+build/
+install/
+log/
