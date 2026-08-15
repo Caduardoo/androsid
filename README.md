@@ -48,6 +48,12 @@ proot-distro build -f docker/Dockerfile -t androsid:jazzy --install-as androsid 
 proot-distro login androsid
 ```
 
+Entering from ssh directly to the container can be done by:
+
+```bash
+ssh -p 8022 u0_aXXX@<phone-ip> -t 'proot-distro login androsid'
+```
+
 And run the bridge:
 
 ```bash
