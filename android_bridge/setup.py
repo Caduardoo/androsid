@@ -14,7 +14,7 @@ setup(
     zip_safe=True,
     maintainer='Lorenzo Oliveira',
     maintainer_email='lorenzo.oliveira@ee.ufcg.edu.br',
-    description='ROS 2 bridge for the andROSid Android sensor streamer.',
+    description='ROS 2 bridge for the androsid Android sensor streamer.',
     license='Apache-2.0',
     entry_points={
         'console_scripts': [

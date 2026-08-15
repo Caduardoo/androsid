@@ -3,7 +3,7 @@
 <package format="3">
   <name>android_bridge</name>
   <version>0.1.0</version>
-  <description>ROS 2 bridge for the andROSid Android sensor streamer.</description>
+  <description>ROS 2 bridge for the androsid Android sensor streamer.</description>
   <maintainer email="lorenzo.oliveira@ee.ufcg.edu.br">Lorenzo Oliveira</maintainer>
   <license>Apache-2.0</license>
 

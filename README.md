@@ -1,4 +1,4 @@
-# andROSid
+# androsid
 
 Turns an Android phone into a ROS 2 sensor source: camera, IMU and GPS, all on one
 clock, streamed over a localhost socket into a ROS 2 node running in Termux/proot.
@@ -9,7 +9,7 @@ sensor rather than at the moment a pipe happened to be scheduled.
 
 ## Building the app
 
-Open the `andROSid/android` folder in Android Studio and hit `Run` with the phone connected
+Open the `androsid/android` folder in Android Studio and hit `Run` with the phone connected
 over USB debugging. Ensure your Android device has Developer Options unlocked and
 USB debugging enabled there.
 
@@ -38,7 +38,7 @@ ssh -p 8022 u0_aXXX@<phone-ip>
 Clone the repo:
 
 ```bash
-git clone https://github.com/loolirer/andROSid.git && cd andROSid
+git clone https://github.com/loolirer/androsid.git && cd androsid
 ```
 
 Build the image and access the container (tested on Jazzy, but you may change it via `--build-arg ROS_DISTRO=<distro>`):

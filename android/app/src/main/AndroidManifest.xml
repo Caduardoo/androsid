@@ -20,7 +20,7 @@
 
     <application
         android:allowBackup="false"
-        android:label="andROSid"
+        android:label="androsid"
         android:supportsRtl="true">
 
         <activity

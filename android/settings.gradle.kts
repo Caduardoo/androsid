@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "andROSid"
+rootProject.name = "androsid"
 include(":app")

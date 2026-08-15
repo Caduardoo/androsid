@@ -224,7 +224,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             nm.createNotificationChannel(
                 NotificationChannel(
-                    CHANNEL_ID, "andROSid stream", NotificationManager.IMPORTANCE_LOW
+                    CHANNEL_ID, "androsid stream", NotificationManager.IMPORTANCE_LOW
                 )
             )
         }
@@ -233,7 +233,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("andROSid")
+            .setContentTitle("androsid")
             .setContentText("Streaming sensors on port $PORT")
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setOngoing(true)
