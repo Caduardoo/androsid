@@ -14,22 +14,9 @@ from sensor_msgs.msg import CompressedImage, Imu, MagneticField, NavSatFix, NavS
 TYPE_JSON = 0x01
 TYPE_FRAME = 0x02
 
-# Standard gravity, only used to sanity-check that accel units look like m/s^2.
-G = 9.80665
 
-
+# Android device frame -> ROS REP-103 FLU (landscape orientation)
 def android_to_flu(x, y, z):
-    """Android device frame -> ROS REP-103 FLU.
-
-    Android's frame is fixed to the device's portrait orientation and
-    does not follow screen rotation: X right, Y up the screen, Z out of the screen.
-
-    Mounting: Device landscape, rear camera pointing forward, buttons up
-
-        forward (x_ros) = -Z   rear camera points opposite the screen normal
-        left    (y_ros) = +Y   top edge of the device points left
-        up      (z_ros) = +X   right edge in portrait, where the buttons are
-    """
     return -z, y, x
 
 
@@ -62,34 +49,51 @@ class MobileSensors(Node):
             CompressedImage, "camera/image_raw/compressed", sensor_qos
         )
 
-        # Accelerometer and gyroscope arrive as separate events; hold the most
-        # recent accel and emit a combined Imu when the gyro sample lands.
         self._last_accel = None
-        self._warned_units = False
         self._logged_provider = False
 
         self._stop = threading.Event()
+        self._sock = None
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
     def destroy_node(self):
         self._stop.set()
+
+        sock, self._sock = self._sock, None
+        if sock is not None:
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+        self._thread.join(timeout=2.0)
+        if self._thread.is_alive():
+            self.get_logger().warn("Reader thread still running after 2s")
+
         return super().destroy_node()
 
     def _run(self):
         while not self._stop.is_set() and rclpy.ok():
             try:
-                self.get_logger().info(f"connecting to {self.host}:{self.port}")
+                self.get_logger().info(f"Connecting to {self.host}:{self.port}")
                 with socket.create_connection(
                     (self.host, self.port), timeout=10
                 ) as sock:
                     sock.settimeout(None)
                     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                    self.get_logger().info("connected")
+                    self._sock = sock
+                    self.get_logger().info("Connected!")
                     self._consume(sock)
+
             except OSError as exc:
-                self.get_logger().warn(f"connection failed: {exc}; retrying in 2s")
+                if self._stop.is_set():
+                    break
+                self.get_logger().warn(f"Connection failed: {exc}; retrying in 2s")
                 self._stop.wait(2.0)
+
+            finally:
+                self._sock = None
 
     @staticmethod
     def _read_exactly(sock, count):
@@ -98,7 +102,7 @@ class MobileSensors(Node):
         while remaining:
             chunk = sock.recv(remaining)
             if not chunk:
-                raise ConnectionError("stream closed")
+                raise ConnectionError("Stream closed")
             chunks.append(chunk)
             remaining -= len(chunk)
         return b"".join(chunks)
@@ -115,7 +119,7 @@ class MobileSensors(Node):
                 stamp = struct.unpack(">q", payload[:8])[0]
                 self._on_frame(stamp, payload[8:])
             else:
-                self.get_logger().warn(f"unknown frame type {msg_type}, skipping")
+                self.get_logger().warn(f"Unknown frame type {msg_type}, skipping...")
 
     def _on_json(self, sample):
         kind = sample.get("s")
@@ -130,7 +134,7 @@ class MobileSensors(Node):
 
     def _on_imu(self, sample):
         if self._last_accel is None:
-            return  # Wait until we have an accel sample to pair with
+            return
 
         msg = Imu()
         msg.header.stamp = to_ros_time(sample["t"])
@@ -146,12 +150,10 @@ class MobileSensors(Node):
         msg.linear_acceleration.y = float(ay)
         msg.linear_acceleration.z = float(az)
 
-        # -1 in the first element is the REP-145 convention for "no orientation
-        # estimate here". Run imu_filter_madgwick downstream to produce one.
+        # -1 in the first element is the REP-145 for "no orientation estimate here"
         msg.orientation_covariance[0] = -1.0
 
-        # Rough fixed covariances. Replace with values from a stationary Allan
-        # variance run if you care about the output of a real estimator.
+        # TODO: Rough fixed covariances. Replace with values from a stationary Allan
         msg.angular_velocity_covariance[0] = 4e-4
         msg.angular_velocity_covariance[4] = 4e-4
         msg.angular_velocity_covariance[8] = 4e-4
@@ -159,7 +161,6 @@ class MobileSensors(Node):
         msg.linear_acceleration_covariance[4] = 4e-2
         msg.linear_acceleration_covariance[8] = 4e-2
 
-        self._check_units(self._last_accel)
         self.pub_imu.publish(msg)
 
     def _on_mag(self, sample):
@@ -167,7 +168,7 @@ class MobileSensors(Node):
         msg.header.stamp = to_ros_time(sample["t"])
         msg.header.frame_id = self.imu_frame
 
-        # Android reports microtesla, ROS wants tesla.
+        # Android reports microtesla, ROS 2 uses with tesla
         mx, my, mz = android_to_flu(*sample["v"])
         msg.magnetic_field.x = float(mx) * 1e-6
         msg.magnetic_field.y = float(my) * 1e-6
@@ -189,19 +190,11 @@ class MobileSensors(Node):
         msg.header.stamp = to_ros_time(sample["t"])
         msg.header.frame_id = self.gps_frame
         msg.status.status = NavSatStatus.STATUS_FIX
-        # `service` is a bitmask of the GNSS constellations used. A Wi-Fi or cell
-        # trilaterated fix used none of them, so claiming SERVICE_GPS would lie to
-        # anything downstream that branches on it. The covariance below still
-        # carries the real uncertainty either way.
-        msg.status.service = (
-            NavSatStatus.SERVICE_GPS if provider == "gps" else 0
-        )
+        msg.status.service = NavSatStatus.SERVICE_GPS if provider == "gps" else 0
         msg.latitude = float(sample["lat"])
         msg.longitude = float(sample["lon"])
         msg.altitude = float(sample["alt"])
 
-        # Android accuracy is a 68% horizontal radius in metres; square it for
-        # a variance and spread it over both horizontal axes.
         horiz = float(sample.get("acc", 0.0)) ** 2
         vert = float(sample.get("vacc", 0.0)) ** 2 or horiz
         msg.position_covariance[0] = horiz
@@ -217,17 +210,6 @@ class MobileSensors(Node):
         msg.format = "jpeg"
         msg.data = jpeg
         self.pub_img.publish(msg)
-
-    def _check_units(self, accel):
-        if self._warned_units:
-            return
-        magnitude = sum(component**2 for component in accel) ** 0.5
-        if not (0.5 * G < magnitude < 2.0 * G):
-            self.get_logger().warn(
-                f"accel magnitude {magnitude:.2f} is far from {G:.2f} m/s^2 -- "
-                "check that the device is stationary and the axes are right"
-            )
-        self._warned_units = True
 
 
 def main(args=None):
