@@ -1,5 +1,4 @@
 android/
-docker/
 .git/
 **/__pycache__/
 **/*.pyc
