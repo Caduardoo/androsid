@@ -19,35 +19,36 @@ indicator that it's alive.
 
 ## Setting up a ROS 2 environment on your device
 
-Install [Termux](https://f-droid.org/packages/com.termux/) app on your android device, and inside it, set up [`proot-distro`](https://github.com/termux/proot-distro):
+Install [Termux](https://f-droid.org/packages/com.termux/) app on your android device, and inside it:
 
 ```bash
-pkg install proot-distro
+pkg install proot-distro openssh git nano
+echo "pgrep -x sshd >/dev/null || sshd" >> ~/.bashrc
+passwd
+whoami
 ```
 
-Download the ROS 2 image of your preference (this was tested on Jazzy) and access the
-container:
+`passwd` sets your ssh password and `whoami` prints your ssh username. The server
+listens on port 8022, so from your computer:
 
 ```bash
-proot-distro install ros:jazzy-ros-base --override-alias ros-jazzy
-proot-distro login ros-jazzy
+ssh -p 8022 u0_aXXX@<phone-ip>
 ```
 
-On the container, clone this repo and build the package:
+Clone the repo:
 
 ```bash
-mkdir src && cd src && git clone https://github.com/loolirer/andROSid.git && cd ..
+git clone https://github.com/loolirer/andROSid.git && cd andROSid
 ```
 
-Then build the package and setup the environment:
+Build the image and access the container (tested on Jazzy, but you may change it via `--build-arg ROS_DISTRO=<distro>`):
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-colcon build --packages-select android_bridge
-source install/setup.bash
+proot-distro build -f docker/Dockerfile -t androsid:jazzy --install-as androsid .
+proot-distro login androsid
 ```
 
-And run the bridge.
+And run the bridge:
 
 ```bash
 ros2 run android_bridge mobile_sensors
@@ -62,3 +63,5 @@ topics below:
 - `/imu/mag`
 - `/gps/fix`
 - `/camera/image_raw/compressed`
+
+---
