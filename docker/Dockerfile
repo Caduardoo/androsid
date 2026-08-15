@@ -17,8 +17,7 @@ COPY android_bridge src/android_bridge
 RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build --symlink-install --packages-select android_bridge"
 
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
-    echo "source ${COLCON_WS}/install/setup.bash" >> ~/.bashrc
+RUN echo "source ${COLCON_WS}/install/setup.bash" >> ~/.bashrc
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
