@@ -237,7 +237,7 @@ class MobileSensors(Node):
     def _on_battery(self, sample):
         msg = BatteryState()
         msg.header.stamp = to_ros_time(sample["t"])
-        msg.voltage = float(sample.get("temperature", float("nan")))
+        msg.voltage = float(sample.get("voltage", float("nan")))
         msg.temperature = float(sample.get("temperature", float("nan")))
         msg.current = float(sample.get("current", float("nan")))
         msg.percentage = float(sample.get("percentage", float("nan")))
