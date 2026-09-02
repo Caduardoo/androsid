@@ -7,7 +7,7 @@ import rclpy
 from builtin_interfaces.msg import Time
 from rclpy.node import Node
 from rclpy.qos import QoSPresetProfiles
-from sensor_msgs.msg import CompressedImage, Imu, MagneticField, NavSatFix, NavSatStatus
+from sensor_msgs.msg import BatteryState, CompressedImage, Imu, MagneticField, NavSatFix, NavSatStatus
 
 TYPE_JSON = 0x01
 TYPE_FRAME = 0x02
@@ -20,6 +20,26 @@ def android_to_flu(x, y, z):
 
 def to_ros_time(nanos):
     return Time(sec=int(nanos // 1_000_000_000), nanosec=int(nanos % 1_000_000_000))
+
+# BatteryManager.BATTERY_STATUS_* -> ROS 2 BatteryState.POWER_SUPPLY_STATUS_*
+ANDROID_STATUS_TO_ROS = {
+    1: BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,      # BATTERY_STATUS_UNKNOWN
+    2: BatteryState.POWER_SUPPLY_STATUS_CHARGING,     # BATTERY_STATUS_CHARGING
+    3: BatteryState.POWER_SUPPLY_STATUS_DISCHARGING,  # BATTERY_STATUS_DISCHARGING
+    4: BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING, # BATTERY_STATUS_NOT_CHARGING
+    5: BatteryState.POWER_SUPPLY_STATUS_FULL,         # BATTERY_STATUS_FULL
+}
+
+# Android BatteryManager.BATTERY_HEALTH_* -> ROS 2 BatteryState.POWER_SUPPLY_HEALTH_*
+ANDROID_HEALTH_TO_ROS = {
+    1: BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,              # BATTERY_HEALTH_UNKNOWN
+    2: BatteryState.POWER_SUPPLY_HEALTH_GOOD,                 # BATTERY_HEALTH_GOOD
+    3: BatteryState.POWER_SUPPLY_HEALTH_OVERHEAT,             # BATTERY_HEALTH_OVERHEAT
+    4: BatteryState.POWER_SUPPLY_HEALTH_DEAD,                 # BATTERY_HEALTH_DEAD
+    5: BatteryState.POWER_SUPPLY_HEALTH_OVERVOLTAGE,          # BATTERY_HEALTH_OVERVOLTAGE
+    6: BatteryState.POWER_SUPPLY_HEALTH_UNSPECIFIED_FAILURE,  # BATTERY_HEALTH_UNSPECIFIED_FAILURE
+    7: BatteryState.POWER_SUPPLY_HEALTH_COLD,                 # BATTERY_HEALTH_COLD
+}
 
 
 class MobileSensors(Node):
@@ -45,6 +65,9 @@ class MobileSensors(Node):
         self.pub_gps = self.create_publisher(NavSatFix, "gps/fix", sensor_qos)
         self.pub_img = self.create_publisher(
             CompressedImage, "camera/image_raw/compressed", sensor_qos
+        )
+        self.pub_battery = self.create_publisher(
+            BatteryState, "battery/state", sensor_qos
         )
 
         self._last_accel = None
@@ -129,6 +152,8 @@ class MobileSensors(Node):
             self._on_imu(sample)
         elif kind == "mag":
             self._on_mag(sample)
+        elif kind == "battery":
+            self._on_battery(sample)
 
     def _on_imu(self, sample):
         if self._last_accel is None:
@@ -209,6 +234,27 @@ class MobileSensors(Node):
         msg.data = jpeg
         self.pub_img.publish(msg)
 
+    def _on_battery(self, sample):
+        msg = BatteryState()
+        msg.header.stamp = to_ros_time(sample["t"])
+        msg.voltage = float(sample.get("temperature", float("nan")))
+        msg.temperature = float(sample.get("temperature", float("nan")))
+        msg.current = float(sample.get("current", float("nan")))
+        msg.percentage = float(sample.get("percentage", float("nan")))
+        msg.present = bool(sample.get("present", True))
+        
+        status_code = sample.get("status", 1)
+        msg.power_supply_status = ANDROID_STATUS_TO_ROS.get(
+            status_code, BatteryState.POWER_SUPPLY_STATUS_UNKNOWN
+        )
+
+        health_code = sample.get("health", 1)
+        msg.power_supply_health = ANDROID_HEALTH_TO_ROS.get(
+            health_code, BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN
+        )
+
+        msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LION
+        self.pub_battery.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)
