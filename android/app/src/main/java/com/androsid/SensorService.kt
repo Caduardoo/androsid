@@ -80,7 +80,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
         } else{
-            @Supress("DEPRECATION")
+            @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
     }
@@ -247,6 +247,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 "vibrate" -> {
                     // Default vibration time of 300ms when left empty
                     val duration = obj.optLong("duration_ms", 300L)
+                    val amplitude = obj.optInt("amplitude", 255)
                     vibrate(duration)
                 }
             }
@@ -259,11 +260,16 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         if (!vibrator.hasVibrator()) return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val amp = if (vibrator.hasAmplitudeControl()){
+                amplitude.coerceIn(1,255)
+            } else {
+                VibrationEffect.DEFAULT_AMPLITUDE
+            }
             vibrator.vibrate(
-                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+                VibrationEffect.createOneShot(durationMs, amp)
             )
         } else {
-            @Supress("DEPRECATION")
+            @Suppress("DEPRECATION")
             vibrator.vibrate(durationMs)
         }
     }

@@ -280,7 +280,11 @@ class MobileSensors(Node):
 
     def _on_vibrate_cmd(self, msg: Int32):
         duration = int(msg.data) if msg.data > 0 else 300
-        cmd = json.dumps({"cmd": "vibrate", "duration_ms": duration}) + "\n"
+        cmd = json.dumps({
+            "cmd": "vibrate", 
+            "duration_ms": duration,
+            "amplitude": 255
+            }) + "\n"
         try:
             self._sock.sendall(cmd.encode("utf-8"))
         except Exception as e:
