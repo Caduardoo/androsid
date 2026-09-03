@@ -264,7 +264,7 @@ class MobileSensors(Node):
         msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LION
         self.pub_battery.publish(msg)
 
-    def on_torch_cmd(self, msg:Bool):
+    def _on_torch_cmd(self, msg:Bool):
         cmd = json.dumps({"cmd": "torch", "state": bool(msg.data)}) + "\n"
         try:
             self._sock.sendall(cmd.encode("utf-8"))
