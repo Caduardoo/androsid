@@ -256,7 +256,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         }
     }
 
-    private fun vibrate(durationMs: Long) {
+    private fun vibrate(durationMs: Long, amplitude: Int = 255) {
         if (!vibrator.hasVibrator()) return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
