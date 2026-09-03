@@ -79,16 +79,11 @@ topics below:
 
 You can also control device actuators:
 
-- /flashlight/cmd (`std_msgs/msg/Bool`): Turn the camera torch/flash on or off
+- /flashlight/cmd (`std_msgs/msg/Bool`): Turn the camera torch/flash on(true) or off(false)
 
 Turn on:
 ```bash
 ros2 topic pub --once /flashlight/cmd std_msgs/msg/Bool "{data: true}"
-```
-
-Turn off:
-```bash
-ros2 topic pub --once /flashlight/cmd std_msgs/msg/Bool "{data: false}"
 ```
 
 - /vibrate/cmd (`std_msgs/msg/Int32`): Trigger haptic feedback/vibration by specifying the duration in milliseconds. Values <= 0 trigger a default 300ms pulse.
@@ -97,10 +92,4 @@ Short pulse (200 ms):
 ```bash
 ros2 topic pub --once /vibrate/cmd std_msgs/msg/Int32 "{data: 200}"
 ```
-
-Long alert (1 sec):
-```bash
-ros2 topic pub --once /vibrate/cmd std_msgs/msg/Int32 "{data: 1000}"
-```
-
 ---
