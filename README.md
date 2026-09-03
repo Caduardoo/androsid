@@ -75,5 +75,6 @@ topics below:
 - `/imu/mag`
 - `/gps/fix`
 - `/camera/image_raw/compressed`
+- `/battery/state`
 
 ---
