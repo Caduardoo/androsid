@@ -31,6 +31,10 @@ import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.os.BatteryManager
 
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+
 /**
  * Owns every sensor and streams them out of a single socket on a single clock.
  *
@@ -70,6 +74,16 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
     private var loggedFirstFix = false
 
     private var batteryReceiver: BroadcastReceiver? = null
+
+    private val vibrator: Vibrator by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else{
+            @Supress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -225,12 +239,32 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
     private fun handleCommand(rawJson: String) {
         try {
             val obj = org.json.JSONObject(rawJson)
-            if (obj.optString("cmd") == "torch") {
-                val state = obj.optBoolean("state", false)
-                camera?.setTorch(state)
+            when (obj.optString("cmd")) {
+                "torch" -> {
+                    val state = obj.optBoolean("state", false)
+                    camera?.setTorch(state)
+                }
+                "vibrate" -> {
+                    // Default vibration time of 300ms when left empty
+                    val duration = obj.optLong("duration_ms", 300L)
+                    vibrate(duration)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "failed to parse command: $rawJson", e)
+        }
+    }
+
+    private fun vibrate(durationMs: Long) {
+        if (!vibrator.hasVibrator()) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Supress("DEPRECATION")
+            vibrator.vibrate(durationMs)
         }
     }
 

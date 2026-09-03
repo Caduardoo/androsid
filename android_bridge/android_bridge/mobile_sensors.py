@@ -8,7 +8,7 @@ from builtin_interfaces.msg import Time
 from rclpy.node import Node
 from rclpy.qos import QoSPresetProfiles
 from sensor_msgs.msg import BatteryState, CompressedImage, Imu, MagneticField, NavSatFix, NavSatStatus
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int32
 
 TYPE_JSON = 0x01
 TYPE_FRAME = 0x02
@@ -75,6 +75,13 @@ class MobileSensors(Node):
             Bool,
             '/flashlight/cmd',
             self._on_torch_cmd,
+            10
+        )
+
+        self.sub_vibrate = self.create_subscription(
+            Int32,
+            '/vibrate/cmd',
+            self._on_vibrate_cmd,
             10
         )
 
@@ -270,6 +277,14 @@ class MobileSensors(Node):
             self._sock.sendall(cmd.encode("utf-8"))
         except Exception as e:
             self.get_logger().error(f"Failed to send torch command: {e}")
+
+    def _on_vibrate_cmd(self, msg: Int32):
+        duration = int(msg.data) if msg.data > 0 else 300
+        cmd = json.dumps({"cmd": "vibrate", "duration_ms": duration}) + "\n"
+        try:
+            self._sock.sendall(cmd.encode("utf-8"))
+        except Exception as e:
+            self.get_logger().error(f"Failed to send vibrate command: {e}")
 
 def main(args=None):
     rclpy.init(args=args)
