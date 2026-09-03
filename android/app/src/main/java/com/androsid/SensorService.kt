@@ -205,7 +205,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 val tech = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: ""
 
                 val bm = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-                // BATTERY_PROPERTY_CURRENT_NOW retorna uA
+
                 val currentUa = bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: 0
                 val current = if (currentUa != Int.MIN_VALUE && currentUa != 0) currentUa / 1_000_000.0f else Float.NaN
 

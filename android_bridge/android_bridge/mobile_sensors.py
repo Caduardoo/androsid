@@ -21,7 +21,6 @@ def android_to_flu(x, y, z):
 def to_ros_time(nanos):
     return Time(sec=int(nanos // 1_000_000_000), nanosec=int(nanos % 1_000_000_000))
 
-# BatteryManager.BATTERY_STATUS_* -> ROS 2 BatteryState.POWER_SUPPLY_STATUS_*
 ANDROID_STATUS_TO_ROS = {
     1: BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,      # BATTERY_STATUS_UNKNOWN
     2: BatteryState.POWER_SUPPLY_STATUS_CHARGING,     # BATTERY_STATUS_CHARGING
@@ -30,7 +29,6 @@ ANDROID_STATUS_TO_ROS = {
     5: BatteryState.POWER_SUPPLY_STATUS_FULL,         # BATTERY_STATUS_FULL
 }
 
-# Android BatteryManager.BATTERY_HEALTH_* -> ROS 2 BatteryState.POWER_SUPPLY_HEALTH_*
 ANDROID_HEALTH_TO_ROS = {
     1: BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,              # BATTERY_HEALTH_UNKNOWN
     2: BatteryState.POWER_SUPPLY_HEALTH_GOOD,                 # BATTERY_HEALTH_GOOD
@@ -39,6 +37,14 @@ ANDROID_HEALTH_TO_ROS = {
     5: BatteryState.POWER_SUPPLY_HEALTH_OVERVOLTAGE,          # BATTERY_HEALTH_OVERVOLTAGE
     6: BatteryState.POWER_SUPPLY_HEALTH_UNSPEC_FAILURE,  # BATTERY_HEALTH_UNSPECIFIED_FAILURE
     7: BatteryState.POWER_SUPPLY_HEALTH_COLD,                 # BATTERY_HEALTH_COLD
+}
+
+ANDROID_TECH_TO_ROS = {
+    "Li-ion": BatteryState.POWER_SUPPLY_TECHNOLOGY_LION,
+    "Li-poly": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO,
+    "NiMH": BatteryState.POWER_SUPPLY_TECHNOLOGY_NIMH,
+    "NiCd": BatteryState.POWER_SUPPLY_TECHNOLOGY_NICD,
+    "LiFe": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIFE,
 }
 
 
@@ -242,6 +248,10 @@ class MobileSensors(Node):
         msg.current = float(sample.get("current", float("nan")))
         msg.percentage = float(sample.get("percentage", float("nan")))
         msg.present = bool(sample.get("present", True))
+
+        msg.charge = float("nan")
+        msg.capacity = float("nan")
+        msg.design_capacity = float("nan")
         
         status_code = sample.get("status", 1)
         msg.power_supply_status = ANDROID_STATUS_TO_ROS.get(
@@ -253,7 +263,10 @@ class MobileSensors(Node):
             health_code, BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN
         )
 
-        msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LION
+        tech_code = sample.get("tech", "")
+        msg.power_supply_technology = ANDROID_TECH_TO_ROS.get(
+            tech_code, BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
+        )
         self.pub_battery.publish(msg)
 
 def main(args=None):
