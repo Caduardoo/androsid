@@ -6,6 +6,7 @@ import threading
 import rclpy
 from builtin_interfaces.msg import Time
 from rclpy.node import Node
+from rclpy.qos import QoSPolicyKind
 from rclpy.qos_overriding_options import QoSOverridingOptions
 from sensor_msgs.msg import (
     BatteryState,
@@ -70,7 +71,14 @@ class MobileSensors(Node):
         self.gps_frame = self.get_parameter("gps_frame").value
         self.camera_frame = self.get_parameter("camera_frame").value
 
-        qos_overrides = QoSOverridingOptions.with_default_policies()
+        qos_overrides = QoSOverridingOptions(
+            policy_kinds=(
+                QoSPolicyKind.RELIABILITY,
+                QoSPolicyKind.DURABILITY,
+                QoSPolicyKind.HISTORY,
+                QoSPolicyKind.DEPTH,
+            )
+        )
         self.pub_imu = self.create_publisher(
             Imu, "imu/data_raw", 10, qos_overriding_options=qos_overrides
         )
