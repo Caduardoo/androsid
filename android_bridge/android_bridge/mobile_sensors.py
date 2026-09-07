@@ -6,11 +6,16 @@ import threading
 import rclpy
 from builtin_interfaces.msg import Time
 from rclpy.node import Node
-from rclpy.qos import QoSPresetProfiles
-from sensor_msgs.msg import BatteryState, CompressedImage, Imu, MagneticField, NavSatFix, NavSatStatus
-
-TYPE_JSON = 0x01
-TYPE_FRAME = 0x02
+from rclpy.qos import QoSPolicyKind
+from rclpy.qos_overriding_options import QoSOverridingOptions
+from sensor_msgs.msg import (
+    BatteryState,
+    CompressedImage,
+    Imu,
+    MagneticField,
+    NavSatFix,
+    NavSatStatus,
+)
 
 
 # Android device frame -> ROS REP-103 FLU (landscape orientation)
@@ -21,22 +26,23 @@ def android_to_flu(x, y, z):
 def to_ros_time(nanos):
     return Time(sec=int(nanos // 1_000_000_000), nanosec=int(nanos % 1_000_000_000))
 
+
 ANDROID_STATUS_TO_ROS = {
-    1: BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,      # BATTERY_STATUS_UNKNOWN
-    2: BatteryState.POWER_SUPPLY_STATUS_CHARGING,     # BATTERY_STATUS_CHARGING
+    1: BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,  # BATTERY_STATUS_UNKNOWN
+    2: BatteryState.POWER_SUPPLY_STATUS_CHARGING,  # BATTERY_STATUS_CHARGING
     3: BatteryState.POWER_SUPPLY_STATUS_DISCHARGING,  # BATTERY_STATUS_DISCHARGING
-    4: BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING, # BATTERY_STATUS_NOT_CHARGING
-    5: BatteryState.POWER_SUPPLY_STATUS_FULL,         # BATTERY_STATUS_FULL
+    4: BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING,  # BATTERY_STATUS_NOT_CHARGING
+    5: BatteryState.POWER_SUPPLY_STATUS_FULL,  # BATTERY_STATUS_FULL
 }
 
 ANDROID_HEALTH_TO_ROS = {
-    1: BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,              # BATTERY_HEALTH_UNKNOWN
-    2: BatteryState.POWER_SUPPLY_HEALTH_GOOD,                 # BATTERY_HEALTH_GOOD
-    3: BatteryState.POWER_SUPPLY_HEALTH_OVERHEAT,             # BATTERY_HEALTH_OVERHEAT
-    4: BatteryState.POWER_SUPPLY_HEALTH_DEAD,                 # BATTERY_HEALTH_DEAD
-    5: BatteryState.POWER_SUPPLY_HEALTH_OVERVOLTAGE,          # BATTERY_HEALTH_OVERVOLTAGE
+    1: BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,  # BATTERY_HEALTH_UNKNOWN
+    2: BatteryState.POWER_SUPPLY_HEALTH_GOOD,  # BATTERY_HEALTH_GOOD
+    3: BatteryState.POWER_SUPPLY_HEALTH_OVERHEAT,  # BATTERY_HEALTH_OVERHEAT
+    4: BatteryState.POWER_SUPPLY_HEALTH_DEAD,  # BATTERY_HEALTH_DEAD
+    5: BatteryState.POWER_SUPPLY_HEALTH_OVERVOLTAGE,  # BATTERY_HEALTH_OVERVOLTAGE
     6: BatteryState.POWER_SUPPLY_HEALTH_UNSPEC_FAILURE,  # BATTERY_HEALTH_UNSPECIFIED_FAILURE
-    7: BatteryState.POWER_SUPPLY_HEALTH_COLD,                 # BATTERY_HEALTH_COLD
+    7: BatteryState.POWER_SUPPLY_HEALTH_COLD,  # BATTERY_HEALTH_COLD
 }
 
 ANDROID_TECH_TO_ROS = {
@@ -65,15 +71,31 @@ class MobileSensors(Node):
         self.gps_frame = self.get_parameter("gps_frame").value
         self.camera_frame = self.get_parameter("camera_frame").value
 
-        sensor_qos = QoSPresetProfiles.SENSOR_DATA.value
-        self.pub_imu = self.create_publisher(Imu, "imu/data_raw", sensor_qos)
-        self.pub_mag = self.create_publisher(MagneticField, "imu/mag", sensor_qos)
-        self.pub_gps = self.create_publisher(NavSatFix, "gps/fix", sensor_qos)
+        qos_overrides = QoSOverridingOptions(
+            policy_kinds=(
+                QoSPolicyKind.RELIABILITY,
+                QoSPolicyKind.DURABILITY,
+                QoSPolicyKind.HISTORY,
+                QoSPolicyKind.DEPTH,
+            )
+        )
+        self.pub_imu = self.create_publisher(
+            Imu, "imu/data_raw", 10, qos_overriding_options=qos_overrides
+        )
+        self.pub_mag = self.create_publisher(
+            MagneticField, "imu/mag", 10, qos_overriding_options=qos_overrides
+        )
+        self.pub_gps = self.create_publisher(
+            NavSatFix, "gps/fix", 10, qos_overriding_options=qos_overrides
+        )
         self.pub_img = self.create_publisher(
-            CompressedImage, "camera/image_raw/compressed", sensor_qos
+            CompressedImage,
+            "camera/image_raw/compressed",
+            10,
+            qos_overriding_options=qos_overrides,
         )
         self.pub_battery = self.create_publisher(
-            BatteryState, "battery/state", sensor_qos
+            BatteryState, "battery_state", 10, qos_overriding_options=qos_overrides
         )
 
         self._last_accel = None
@@ -140,9 +162,9 @@ class MobileSensors(Node):
             msg_type, length = struct.unpack(">BI", header)
             payload = self._read_exactly(sock, length)
 
-            if msg_type == TYPE_JSON:
+            if msg_type == 0x01:
                 self._on_json(json.loads(payload.decode("utf-8")))
-            elif msg_type == TYPE_FRAME:
+            elif msg_type == 0x02:
                 stamp = struct.unpack(">q", payload[:8])[0]
                 self._on_frame(stamp, payload[8:])
             else:
@@ -252,7 +274,7 @@ class MobileSensors(Node):
         msg.charge = float("nan")
         msg.capacity = float("nan")
         msg.design_capacity = float("nan")
-        
+
         status_code = sample.get("status", 1)
         msg.power_supply_status = ANDROID_STATUS_TO_ROS.get(
             status_code, BatteryState.POWER_SUPPLY_STATUS_UNKNOWN
@@ -268,6 +290,7 @@ class MobileSensors(Node):
             tech_code, BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
         )
         self.pub_battery.publish(msg)
+
 
 def main(args=None):
     rclpy.init(args=args)
