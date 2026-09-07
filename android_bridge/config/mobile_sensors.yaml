@@ -1,0 +1,33 @@
+/mobile_sensors:
+  ros__parameters:
+    qos_overrides:
+      /imu/data_raw:
+        publisher:
+          reliability: best_effort
+          durability: volatile
+          history: keep_last
+          depth: 5
+      /imu/mag:
+        publisher:
+          reliability: best_effort
+          durability: volatile
+          history: keep_last
+          depth: 5
+      /gps/fix:
+        publisher:
+          reliability: reliable
+          durability: volatile
+          history: keep_last
+          depth: 5
+      /camera/image_raw/compressed:
+        publisher:
+          reliability: best_effort
+          durability: volatile
+          history: keep_last
+          depth: 5
+      /battery_state:
+        publisher:
+          reliability: reliable
+          durability: transient_local
+          history: keep_last
+          depth: 1
