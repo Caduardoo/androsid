@@ -68,13 +68,19 @@ ros2 run android_bridge mobile_sensors
 
 ## Usage
 
-If everything is working correctly, the bridge node should be publishing on the
-topics below:
+If everything is working correctly, the bridge node should be publishing on the topics below:
 
 - `/imu/data_raw`
 - `/imu/mag`
 - `/gps/fix`
 - `/camera/image_raw/compressed`
-- `/battery/state`
+- `/battery_state`
+
+You may customize each topic QoS profile by modifying `android_bridge/config/mobile_sensors.yaml`:
+
+```bash
+ros2 run android_bridge mobile_sensors --ros-args --params-file \
+  $(ros2 pkg prefix android_bridge)/share/android_bridge/config/mobile_sensors.yaml
+```
 
 ---
