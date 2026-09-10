@@ -1,14 +1,12 @@
 # androsid
 
-A ROS 2 development environment that runs on an Android smartphone. It is built from a
-Dockerfile into a proot container under Termux, and ships with a Kotlin sensor bridge 
-that publishes the phone's camera, IMU and GPS as `sensor_msgs`, hardware stamped and on
-one clock.
+A ROS 2 development environment that runs on an Android smartphone. It is built from a Dockerfile into a proot container under Termux, and ships with a Kotlin app and a ROS 2 bridge node that publishes the phone's sensor data as hardware stamped messages.
 
-The bridge is split into an app and a ROS 2 node because a proot container cannot
-reach Android's camera, sensor or location HALs. Going through an app also allows
-hardware timestamps, taken at the sensor rather than at the moment a pipe happened to
-be scheduled.
+<p align="center">
+  <img src="assets/androsid.png" alt="androsid logo" width="160">
+  <br>
+  <sub>Logo by <a href="https://www.behance.net/samyacastro">Samya Castro</a></sub>
+</p>
 
 ## Building the app
 
@@ -19,9 +17,7 @@ Open the `androsid/android` folder in Android Studio and hit `Run` with the phon
 over USB debugging. Ensure your Android device has `Developer Options` unlocked and
 USB debugging enabled there.
 
-Then launch the app and grant camera + location + notifications. There is no UI:
-opening the app starts streaming, closing it stops. The notification is your
-indicator that it's alive.
+Then launch the app and grant all permissions. There is no UI, so opening the app starts streaming, closing it stops. The notification is your indicator that it's alive.
 
 ## Setting up a ROS 2 environment on your device
 
