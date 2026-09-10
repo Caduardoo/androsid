@@ -31,12 +31,6 @@ import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.os.BatteryManager
 
-/**
- * Owns every sensor and streams them out of a single socket on a single clock.
- *
- * Runs as a foreground service so Android does not suspend it when the screen
- * goes off -- which it absolutely will otherwise, mid-run, on a robot.
- */
 class SensorService : LifecycleService(), SensorEventListener, LocationListener {
 
     companion object {
@@ -45,18 +39,10 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         private const val CHANNEL_ID = "androsid_stream"
         private const val NOTIF_ID = 1
 
-        /** IMU rate in microseconds between samples. 5000us = 200 Hz (a ceiling, not a promise). */
         private const val SENSOR_PERIOD_US = 5000
 
-        /** GPS is one fix per second at best; asking for more just drains battery. */
         private const val LOCATION_PERIOD_MS = 1000L
 
-        /**
-         * SensorEvent.timestamp counts nanoseconds since boot, not since the epoch.
-         * This offset maps it onto the wall clock ROS expects. Computed once so every
-         * stream shares one mapping -- recomputing per sample would inject jitter and
-         * defeat the whole point of using hardware timestamps.
-         */
         val bootToEpochNanos: Long =
             System.currentTimeMillis() * 1_000_000L - SystemClock.elapsedRealtimeNanos()
     }
@@ -83,11 +69,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "androsid::stream")
             .apply { acquire() }
 
-        // The Wi-Fi firmware drops multicast for groups nothing has joined, so the
-        // CPU can stay asleep -- which silently breaks DDS discovery for the ROS
-        // node in proot. This lock is an interface-level setting rather than a
-        // per-app one, so holding it here unblocks that separate process too.
-        // Not reference counted: one release should always clear it.
+        // The Wi-Fi firmware drops multicast for groups nothing has joined
         multicastLock = (applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             .createMulticastLock("androsid::dds")
             .apply {
@@ -96,10 +78,6 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             }
         Log.i(TAG, "multicast lock acquired, DDS discovery should reach this device")
 
-        // Sensor and location callbacks default to the main looper, and every one of
-        // them ends in a blocking socket write -- which Android answers with
-        // NetworkOnMainThreadException. Give both a background looper instead. This
-        // also keeps a stalled consumer from freezing the UI thread.
         val thread = HandlerThread("androsid-sensors").also { it.start() }
         sensorThread = thread
 
@@ -116,8 +94,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             (getSystemService(Context.LOCATION_SERVICE) as LocationManager)
                 .removeUpdates(this)
         } catch (_: SecurityException) {}
-        // Both listeners are unregistered above, so no callback can be mid-flight.
-        // quitSafely lets already-queued messages finish rather than dropping them.
+
         batteryReceiver?.let {
             try { unregisterReceiver(it) } catch (_: Exception) {}
             batteryReceiver = null
@@ -156,11 +133,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         }
         val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        // GPS_PROVIDER is satellite-only, so it publishes nothing indoors. FUSED
-        // blends GNSS with Wi-Fi and cell trilateration and will produce a coarse
-        // fix at a desk. It needs API 31; below that there is nothing to fall back
-        // to but raw GNSS. Either way the provider name goes out on the wire so the
-        // bridge can tell a 5 m satellite fix from a 25 m trilaterated one.
+        // FUSED blends GNSS with Wi-Fi and cell trilateration for coarse estimation
         val provider = if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             lm.allProviders.contains(LocationManager.FUSED_PROVIDER)
@@ -211,7 +184,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
 
                 val t = SystemClock.elapsedRealtimeNanos() + bootToEpochNanos
 
-                server.broadcastJson(
+                server.broadcast(
                     """{"s":"battery","t":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":$status,"health":$health,"present":$present,"tech":"$tech"}"""
                 )
             }
@@ -230,7 +203,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             else -> return
         }
         val t = event.timestamp + bootToEpochNanos
-        server.broadcastJson(
+        server.broadcast(
             """{"s":"$name","t":$t,"v":[${event.values[0]},${event.values[1]},${event.values[2]}]}"""
         )
     }
@@ -238,8 +211,6 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     override fun onLocationChanged(loc: Location) {
-        // Location.elapsedRealtimeNanos shares the boot-relative base used above,
-        // so the fix lands on the same timeline as the IMU samples.
         val t = loc.elapsedRealtimeNanos + bootToEpochNanos
         val vertAcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             loc.verticalAccuracyMeters.toDouble() else 0.0
@@ -249,7 +220,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             Log.i(TAG, "first fix from '${loc.provider}', accuracy ${loc.accuracy} m")
         }
 
-        server.broadcastJson(
+        server.broadcast(
             """{"s":"gps","t":$t,"lat":${loc.latitude},"lon":${loc.longitude},""" +
             """"alt":${loc.altitude},"acc":${loc.accuracy},"vacc":$vertAcc,""" +
             """"speed":${loc.speed},"bearing":${loc.bearing},""" +

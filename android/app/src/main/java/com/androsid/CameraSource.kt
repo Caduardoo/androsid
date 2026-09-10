@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.util.Base64
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -15,13 +16,6 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/**
- * CameraX ImageAnalysis -> NV21 -> JPEG -> [StreamServer].
- *
- * Deliberately does not set a target resolution: the ImageAnalysis default is
- * 640x480, which is what you want on a robot anyway. Raising it costs CPU in the
- * software JPEG encode below and will thermal-throttle the phone.
- */
 class CameraSource(
     private val context: Context,
     private val owner: LifecycleOwner,
@@ -30,7 +24,13 @@ class CameraSource(
     private val lensFacing: Int = CameraSelector.LENS_FACING_BACK
 ) {
 
-    companion object { private const val TAG = "CameraSource" }
+    companion object {
+        private const val TAG = "CameraSource"
+
+        private val FRAME_PREFIX = "{\"s\":\"frame\",\"t\":".toByteArray(Charsets.US_ASCII)
+        private val FRAME_MID = ",\"d\":\"".toByteArray(Charsets.US_ASCII)
+        private val FRAME_SUFFIX = "\"}\n".toByteArray(Charsets.US_ASCII)
+    }
 
     private var executor: ExecutorService? = null
     private var provider: ProcessCameraProvider? = null
@@ -73,13 +73,10 @@ class CameraSource(
         try {
             if (!loggedRotation) {
                 loggedRotation = true
-                // Tells you whether the mounted-landscape frames arrive upright.
-                // See the "Frames" section of README.md.
                 Log.i(TAG, "first frame: ${image.width}x${image.height}, " +
                     "rotationDegrees=${image.imageInfo.rotationDegrees}")
             }
 
-            // Nobody is listening: skip the encode entirely rather than burn CPU.
             if (!server.hasClients()) return
 
             val nv21 = image.toNv21()
@@ -89,10 +86,21 @@ class CameraSource(
                 buf.toByteArray()
             }
 
-            // Same boot-relative base as SensorEvent.timestamp on most devices --
-            // see the note in README.md about SENSOR_INFO_TIMESTAMP_SOURCE.
             val stamp = image.imageInfo.timestamp + SensorService.bootToEpochNanos
-            server.broadcastFrame(stamp, jpeg)
+            val stampBytes = stamp.toString().toByteArray(Charsets.US_ASCII)
+            val b64 = Base64.encode(jpeg, Base64.NO_WRAP)
+
+            val line = ByteArrayOutputStream(
+                FRAME_PREFIX.size + stampBytes.size + FRAME_MID.size + b64.size + FRAME_SUFFIX.size
+            ).apply {
+                write(FRAME_PREFIX)
+                write(stampBytes)
+                write(FRAME_MID)
+                write(b64)
+                write(FRAME_SUFFIX)
+            }.toByteArray()
+
+            server.broadcastLine(line)
         } catch (e: Exception) {
             Log.e(TAG, "frame encode failed", e)
         } finally {
@@ -101,11 +109,6 @@ class CameraSource(
     }
 }
 
-/**
- * YUV_420_888 -> NV21 (Y plane followed by interleaved VU), honouring the row and
- * pixel strides the camera HAL reports. Skipping the stride handling is the classic
- * source of green-striped images.
- */
 private fun ImageProxy.toNv21(): ByteArray {
     val ySize = width * height
     val out = ByteArray(ySize + ySize / 2)
