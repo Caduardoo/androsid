@@ -52,9 +52,11 @@ class StreamServer(private val port: Int) {
 
     fun clientCount(): Int = clients.size
 
-    fun broadcast(json: String) {
+    fun broadcast(json: String) =
+        broadcastLine((json + "\n").toByteArray(Charsets.UTF_8))
+
+    fun broadcastLine(line: ByteArray) {
         if (clients.isEmpty()) return
-        val line = (json + "\n").toByteArray(Charsets.UTF_8)
 
         for (client in clients) {
             try {

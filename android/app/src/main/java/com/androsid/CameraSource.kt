@@ -24,7 +24,13 @@ class CameraSource(
     private val lensFacing: Int = CameraSelector.LENS_FACING_BACK
 ) {
 
-    companion object { private const val TAG = "CameraSource" }
+    companion object {
+        private const val TAG = "CameraSource"
+
+        private val FRAME_PREFIX = "{\"s\":\"frame\",\"t\":".toByteArray(Charsets.US_ASCII)
+        private val FRAME_MID = ",\"d\":\"".toByteArray(Charsets.US_ASCII)
+        private val FRAME_SUFFIX = "\"}\n".toByteArray(Charsets.US_ASCII)
+    }
 
     private var executor: ExecutorService? = null
     private var provider: ProcessCameraProvider? = null
@@ -81,8 +87,20 @@ class CameraSource(
             }
 
             val stamp = image.imageInfo.timestamp + SensorService.bootToEpochNanos
-            val b64 = Base64.encodeToString(jpeg, Base64.NO_WRAP)
-            server.broadcast("""{"s":"frame","t":$stamp,"d":"$b64"}""")
+            val stampBytes = stamp.toString().toByteArray(Charsets.US_ASCII)
+            val b64 = Base64.encode(jpeg, Base64.NO_WRAP)
+
+            val line = ByteArrayOutputStream(
+                FRAME_PREFIX.size + stampBytes.size + FRAME_MID.size + b64.size + FRAME_SUFFIX.size
+            ).apply {
+                write(FRAME_PREFIX)
+                write(stampBytes)
+                write(FRAME_MID)
+                write(b64)
+                write(FRAME_SUFFIX)
+            }.toByteArray()
+
+            server.broadcastLine(line)
         } catch (e: Exception) {
             Log.e(TAG, "frame encode failed", e)
         } finally {
