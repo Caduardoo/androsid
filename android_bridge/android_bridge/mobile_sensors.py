@@ -1,6 +1,6 @@
+import base64
 import json
 import socket
-import struct
 import threading
 
 import rclpy
@@ -144,44 +144,30 @@ class MobileSensors(Node):
             finally:
                 self._sock = None
 
-    @staticmethod
-    def _read_exactly(sock, count):
-        chunks = []
-        remaining = count
-        while remaining:
-            chunk = sock.recv(remaining)
-            if not chunk:
-                raise ConnectionError("Stream closed")
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        return b"".join(chunks)
-
     def _consume(self, sock):
+        stream = sock.makefile("r", encoding="utf-8", newline="\n")
         while not self._stop.is_set():
-            header = self._read_exactly(sock, 5)
-            msg_type, length = struct.unpack(">BI", header)
-            payload = self._read_exactly(sock, length)
+            line = stream.readline()
+            if not line:
+                raise ConnectionError("Stream closed")
+            line = line.strip()
+            if not line:
+                continue
 
-            if msg_type == 0x01:
-                self._on_json(json.loads(payload.decode("utf-8")))
-            elif msg_type == 0x02:
-                stamp = struct.unpack(">q", payload[:8])[0]
-                self._on_frame(stamp, payload[8:])
-            else:
-                self.get_logger().warn(f"Unknown frame type {msg_type}, skipping...")
-
-    def _on_json(self, sample):
-        kind = sample.get("s")
-        if kind == "gps":
-            self._on_gps(sample)
-        elif kind == "accel":
-            self._last_accel = sample["v"]
-        elif kind == "gyro":
-            self._on_imu(sample)
-        elif kind == "mag":
-            self._on_mag(sample)
-        elif kind == "battery":
-            self._on_battery(sample)
+            sample = json.loads(line)
+            kind = sample.get("s")
+            if kind == "gps":
+                self._on_gps(sample)
+            elif kind == "accel":
+                self._last_accel = sample["v"]
+            elif kind == "gyro":
+                self._on_imu(sample)
+            elif kind == "mag":
+                self._on_mag(sample)
+            elif kind == "battery":
+                self._on_battery(sample)
+            elif kind == "frame":
+                self._on_frame(sample["t"], base64.b64decode(sample["d"]))
 
     def _on_imu(self, sample):
         if self._last_accel is None:
