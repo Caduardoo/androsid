@@ -3,10 +3,11 @@ project(android_interfaces)
 
 find_package(ament_cmake REQUIRED)
 
-# When adding the first message/service/action, uncomment the block below,
-# add the file(s) under msg/, srv/, or action/, and list them here:
+# Uncomment this only when the first interface is added:
 #
 # find_package(rosidl_default_generators REQUIRED)
+
+# To add your interfaces uncomment the block below and list them here:
 #
 # rosidl_generate_interfaces(${PROJECT_NAME}
 #   # "msg/Example.msg"
