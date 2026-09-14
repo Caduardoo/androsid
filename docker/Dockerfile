@@ -13,9 +13,10 @@ RUN apt-get update && \
 WORKDIR ${COLCON_WS}
 
 COPY android_bridge src/android_bridge
+COPY android_interfaces src/android_interfaces
 
 RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build --symlink-install --packages-select android_bridge"
+    colcon build --symlink-install --packages-select android_interfaces android_bridge"
 
 RUN echo "source ${COLCON_WS}/install/setup.bash" >> ~/.bashrc
 
