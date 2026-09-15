@@ -290,8 +290,8 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 }
 
                 val present = intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true)
-                val techRaw = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: ""
-                val tech = if (techRaw.isBlank()) "unknown" else techRaw.lowercase()
+                val technologyRaw = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: ""
+                val technology = if (technologyRaw.isBlank()) "unknown" else technologyRaw.lowercase()
 
                 val bm = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
 
@@ -301,7 +301,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 val t = SystemClock.elapsedRealtimeNanos() + bootToEpochNanos
 
                 server.broadcast(
-                    """{"s":"battery","t":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":"$status","health":"$health","present":$present,"tech":"$tech"}"""
+                    """{"s":"battery","t":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":"$status","health":"$health","present":$present,"technology":"$technology"}"""
                 )
             }
         }

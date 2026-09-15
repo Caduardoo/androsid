@@ -264,7 +264,7 @@ class MobileSensors(Node):
             sample.get("health", "unknown"), BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN
         )
 
-        techs = {
+        technologies = {
             "nimh": BatteryState.POWER_SUPPLY_TECHNOLOGY_NIMH,
             "li-ion": BatteryState.POWER_SUPPLY_TECHNOLOGY_LION,
             "li-poly": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO,
@@ -272,8 +272,8 @@ class MobileSensors(Node):
             "nicd": BatteryState.POWER_SUPPLY_TECHNOLOGY_NICD,
             "limn": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIMN,
         }
-        msg.power_supply_technology = techs.get(
-            sample.get("tech", "unknown"), BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
+        msg.power_supply_technology = technologies.get(
+            sample.get("technology", "unknown"), BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
         )
         self.pub_battery.publish(msg)
 
