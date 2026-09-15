@@ -301,7 +301,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 val t = SystemClock.elapsedRealtimeNanos() + bootToEpochNanos
 
                 server.broadcast(
-                    """{"s":"battery","t":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":"$status","health":"$health","present":$present,"technology":"$technology"}"""
+                    """{"type":"battery","stamp":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":"$status","health":"$health","present":$present,"technology":"$technology"}"""
                 )
             }
         }
@@ -320,7 +320,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         }
         val t = event.timestamp + bootToEpochNanos
         server.broadcast(
-            """{"s":"$name","t":$t,"v":[${event.values[0] * scale},${event.values[1] * scale},${event.values[2] * scale}]}"""
+            """{"type":"$name","stamp":$t,"axes":[${event.values[0] * scale},${event.values[1] * scale},${event.values[2] * scale}]}"""
         )
     }
 
@@ -337,10 +337,10 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         }
 
         server.broadcast(
-            """{"s":"gps","t":$t,"lat":${loc.latitude},"lon":${loc.longitude},""" +
-            """"alt":${loc.altitude},"acc":${loc.accuracy},"vacc":$vertAcc,""" +
+            """{"type":"gps","stamp":$t,"latitude":${loc.latitude},"longitude":${loc.longitude},""" +
+            """"altitude":${loc.altitude},"accuracy":${loc.accuracy},"vertical_accuracy":$vertAcc,""" +
             """"speed":${loc.speed},"bearing":${loc.bearing},""" +
-            """"prov":"${loc.provider}"}"""
+            """"provider":"${loc.provider}"}"""
         )
     }
 

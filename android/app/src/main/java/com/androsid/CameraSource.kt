@@ -20,13 +20,13 @@ class CameraSource(
     companion object {
         private const val TAG = "CameraSource"
 
-        private val FRAME_MID = "\",\"t\":".toByteArray(Charsets.US_ASCII)
-        private val FRAME_DATA = ",\"d\":\"".toByteArray(Charsets.US_ASCII)
+        private val FRAME_MID = "\",\"stamp\":".toByteArray(Charsets.US_ASCII)
+        private val FRAME_DATA = ",\"data\":\"".toByteArray(Charsets.US_ASCII)
         private val FRAME_SUFFIX = "\"}\n".toByteArray(Charsets.US_ASCII)
     }
 
     private val framePrefix =
-        "{\"s\":\"frame\",\"c\":\"$cameraName".toByteArray(Charsets.US_ASCII)
+        "{\"type\":\"frame\",\"camera_name\":\"$cameraName".toByteArray(Charsets.US_ASCII)
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private var loggedRotation = false
