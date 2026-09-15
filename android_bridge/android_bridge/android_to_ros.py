@@ -1,6 +1,6 @@
 import base64
 
-from builtin_interfaces.msg import Time
+from rclpy.time import Time
 from sensor_msgs.msg import (
     BatteryState,
     CompressedImage,
@@ -11,21 +11,17 @@ from sensor_msgs.msg import (
 )
 
 
-# Android device frame -> ROS REP-103 FLU (landscape orientation)
+# Android device frame to ROS REP-103 FLU (landscape orientation)
 def android_to_flu(x, y, z):
     return -z, y, x
 
 
-def to_ros_time(nanos):
-    return Time(sec=int(nanos // 1_000_000_000), nanosec=int(nanos % 1_000_000_000))
-
-
 def imu_msg(sample, last_accel, frame_id):
     msg = Imu()
-    msg.header.stamp = to_ros_time(sample["t"])
+    msg.header.stamp = Time(nanoseconds=sample["stamp"]).to_msg()
     msg.header.frame_id = frame_id
 
-    gx, gy, gz = android_to_flu(*sample["v"])
+    gx, gy, gz = android_to_flu(*sample["axes"])
     msg.angular_velocity.x = float(gx)
     msg.angular_velocity.y = float(gy)
     msg.angular_velocity.z = float(gz)
@@ -51,10 +47,10 @@ def imu_msg(sample, last_accel, frame_id):
 
 def mag_msg(sample, frame_id):
     msg = MagneticField()
-    msg.header.stamp = to_ros_time(sample["t"])
+    msg.header.stamp = Time(nanoseconds=sample["stamp"]).to_msg()
     msg.header.frame_id = frame_id
 
-    mx, my, mz = android_to_flu(*sample["v"])
+    mx, my, mz = android_to_flu(*sample["axes"])
     msg.magnetic_field.x = float(mx)
     msg.magnetic_field.y = float(my)
     msg.magnetic_field.z = float(mz)
@@ -63,19 +59,19 @@ def mag_msg(sample, frame_id):
 
 
 def gps_msg(sample, frame_id):
-    provider = sample.get("prov", "gps")
+    provider = sample.get("provider", "gps")
 
     msg = NavSatFix()
-    msg.header.stamp = to_ros_time(sample["t"])
+    msg.header.stamp = Time(nanoseconds=sample["stamp"]).to_msg()
     msg.header.frame_id = frame_id
     msg.status.status = NavSatStatus.STATUS_FIX
     msg.status.service = NavSatStatus.SERVICE_GPS if provider == "gps" else 0
-    msg.latitude = float(sample["lat"])
-    msg.longitude = float(sample["lon"])
-    msg.altitude = float(sample["alt"])
+    msg.latitude = float(sample["latitude"])
+    msg.longitude = float(sample["longitude"])
+    msg.altitude = float(sample["altitude"])
 
-    horiz = float(sample.get("acc", 0.0)) ** 2
-    vert = float(sample.get("vacc", 0.0)) ** 2 or horiz
+    horiz = float(sample.get("accuracy", 0.0)) ** 2
+    vert = float(sample.get("vertical_accuracy", 0.0)) ** 2 or horiz
     msg.position_covariance[0] = horiz
     msg.position_covariance[4] = horiz
     msg.position_covariance[8] = vert
@@ -86,16 +82,16 @@ def gps_msg(sample, frame_id):
 
 def frame_msg(sample, camera_name):
     msg = CompressedImage()
-    msg.header.stamp = to_ros_time(sample["t"])
+    msg.header.stamp = Time(nanoseconds=sample["stamp"]).to_msg()
     msg.header.frame_id = f"camera_{camera_name}_optical_frame"
     msg.format = "jpeg"
-    msg.data = base64.b64decode(sample["d"])
+    msg.data = base64.b64decode(sample["data"])
     return msg
 
 
 def battery_msg(sample):
     msg = BatteryState()
-    msg.header.stamp = to_ros_time(sample["t"])
+    msg.header.stamp = Time(nanoseconds=sample["stamp"]).to_msg()
     msg.voltage = float(sample.get("voltage", float("nan")))
     msg.temperature = float(sample.get("temperature", float("nan")))
     msg.current = float(sample.get("current", float("nan")))

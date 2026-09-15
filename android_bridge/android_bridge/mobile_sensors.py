@@ -116,18 +116,18 @@ class MobileSensors(Node):
                 continue
 
             sample = json.loads(line)
-            kind = sample.get("s")
-            if kind == "gps":
+            type_ = sample.get("type")
+            if type_ == "gps":
                 self._on_gps(sample)
-            elif kind == "accel":
-                self._last_accel = sample["v"]
-            elif kind == "gyro":
+            elif type_ == "accel":
+                self._last_accel = sample["axes"]
+            elif type_ == "gyro":
                 self._on_imu(sample)
-            elif kind == "mag":
+            elif type_ == "mag":
                 self._on_mag(sample)
-            elif kind == "battery":
+            elif type_ == "battery":
                 self._on_battery(sample)
-            elif kind == "frame":
+            elif type_ == "frame":
                 self._on_frame(sample)
 
     def _on_imu(self, sample):
@@ -143,7 +143,7 @@ class MobileSensors(Node):
         self.pub_gps.publish(gps_msg(sample, self.gps_frame))
 
     def _on_frame(self, sample):
-        camera_name = sample.get("c", "default")
+        camera_name = sample.get("camera_name", "default")
         pub = self.pub_img.get(camera_name)
         if pub is None:
             pub = self.create_publisher(
