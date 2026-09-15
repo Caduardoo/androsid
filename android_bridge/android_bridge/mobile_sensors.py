@@ -243,7 +243,6 @@ class MobileSensors(Node):
         msg.design_capacity = float("nan")
 
         statuses = {
-            "unknown": BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,
             "charging": BatteryState.POWER_SUPPLY_STATUS_CHARGING,
             "discharging": BatteryState.POWER_SUPPLY_STATUS_DISCHARGING,
             "not_charging": BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING,
@@ -254,7 +253,6 @@ class MobileSensors(Node):
         )
 
         healths = {
-            "unknown": BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,
             "good": BatteryState.POWER_SUPPLY_HEALTH_GOOD,
             "overheat": BatteryState.POWER_SUPPLY_HEALTH_OVERHEAT,
             "dead": BatteryState.POWER_SUPPLY_HEALTH_DEAD,
@@ -266,7 +264,7 @@ class MobileSensors(Node):
             sample.get("health", "unknown"), BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN
         )
 
-        technologies = {
+        techs = {
             "nimh": BatteryState.POWER_SUPPLY_TECHNOLOGY_NIMH,
             "li-ion": BatteryState.POWER_SUPPLY_TECHNOLOGY_LION,
             "li-poly": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO,
@@ -274,7 +272,7 @@ class MobileSensors(Node):
             "nicd": BatteryState.POWER_SUPPLY_TECHNOLOGY_NICD,
             "limn": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIMN,
         }
-        msg.power_supply_technology = technologies.get(
+        msg.power_supply_technology = techs.get(
             sample.get("tech", "unknown"), BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
         )
         self.pub_battery.publish(msg)
