@@ -27,33 +27,6 @@ def to_ros_time(nanos):
     return Time(sec=int(nanos // 1_000_000_000), nanosec=int(nanos % 1_000_000_000))
 
 
-ANDROID_STATUS_TO_ROS = {
-    1: BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,  # BATTERY_STATUS_UNKNOWN
-    2: BatteryState.POWER_SUPPLY_STATUS_CHARGING,  # BATTERY_STATUS_CHARGING
-    3: BatteryState.POWER_SUPPLY_STATUS_DISCHARGING,  # BATTERY_STATUS_DISCHARGING
-    4: BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING,  # BATTERY_STATUS_NOT_CHARGING
-    5: BatteryState.POWER_SUPPLY_STATUS_FULL,  # BATTERY_STATUS_FULL
-}
-
-ANDROID_HEALTH_TO_ROS = {
-    1: BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,  # BATTERY_HEALTH_UNKNOWN
-    2: BatteryState.POWER_SUPPLY_HEALTH_GOOD,  # BATTERY_HEALTH_GOOD
-    3: BatteryState.POWER_SUPPLY_HEALTH_OVERHEAT,  # BATTERY_HEALTH_OVERHEAT
-    4: BatteryState.POWER_SUPPLY_HEALTH_DEAD,  # BATTERY_HEALTH_DEAD
-    5: BatteryState.POWER_SUPPLY_HEALTH_OVERVOLTAGE,  # BATTERY_HEALTH_OVERVOLTAGE
-    6: BatteryState.POWER_SUPPLY_HEALTH_UNSPEC_FAILURE,  # BATTERY_HEALTH_UNSPECIFIED_FAILURE
-    7: BatteryState.POWER_SUPPLY_HEALTH_COLD,  # BATTERY_HEALTH_COLD
-}
-
-ANDROID_TECH_TO_ROS = {
-    "Li-ion": BatteryState.POWER_SUPPLY_TECHNOLOGY_LION,
-    "Li-poly": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO,
-    "NiMH": BatteryState.POWER_SUPPLY_TECHNOLOGY_NIMH,
-    "NiCd": BatteryState.POWER_SUPPLY_TECHNOLOGY_NICD,
-    "LiFe": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIFE,
-}
-
-
 class MobileSensors(Node):
 
     def __init__(self):
@@ -269,19 +242,40 @@ class MobileSensors(Node):
         msg.capacity = float("nan")
         msg.design_capacity = float("nan")
 
-        status_code = sample.get("status", 1)
-        msg.power_supply_status = ANDROID_STATUS_TO_ROS.get(
-            status_code, BatteryState.POWER_SUPPLY_STATUS_UNKNOWN
+        statuses = {
+            "unknown": BatteryState.POWER_SUPPLY_STATUS_UNKNOWN,
+            "charging": BatteryState.POWER_SUPPLY_STATUS_CHARGING,
+            "discharging": BatteryState.POWER_SUPPLY_STATUS_DISCHARGING,
+            "not_charging": BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING,
+            "full": BatteryState.POWER_SUPPLY_STATUS_FULL,
+        }
+        msg.power_supply_status = statuses.get(
+            sample.get("status", "unknown"), BatteryState.POWER_SUPPLY_STATUS_UNKNOWN
         )
 
-        health_code = sample.get("health", 1)
-        msg.power_supply_health = ANDROID_HEALTH_TO_ROS.get(
-            health_code, BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN
+        healths = {
+            "unknown": BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN,
+            "good": BatteryState.POWER_SUPPLY_HEALTH_GOOD,
+            "overheat": BatteryState.POWER_SUPPLY_HEALTH_OVERHEAT,
+            "dead": BatteryState.POWER_SUPPLY_HEALTH_DEAD,
+            "overvoltage": BatteryState.POWER_SUPPLY_HEALTH_OVERVOLTAGE,
+            "unspecified_failure": BatteryState.POWER_SUPPLY_HEALTH_UNSPEC_FAILURE,
+            "cold": BatteryState.POWER_SUPPLY_HEALTH_COLD,
+        }
+        msg.power_supply_health = healths.get(
+            sample.get("health", "unknown"), BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN
         )
 
-        tech_code = sample.get("tech", "")
-        msg.power_supply_technology = ANDROID_TECH_TO_ROS.get(
-            tech_code, BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
+        technologies = {
+            "nimh": BatteryState.POWER_SUPPLY_TECHNOLOGY_NIMH,
+            "li-ion": BatteryState.POWER_SUPPLY_TECHNOLOGY_LION,
+            "li-poly": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO,
+            "life": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIFE,
+            "nicd": BatteryState.POWER_SUPPLY_TECHNOLOGY_NICD,
+            "limn": BatteryState.POWER_SUPPLY_TECHNOLOGY_LIMN,
+        }
+        msg.power_supply_technology = technologies.get(
+            sample.get("tech", "unknown"), BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
         )
         self.pub_battery.publish(msg)
 

@@ -264,25 +264,44 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
                 val percentage = if (level >= 0 && scale > 0) level / scale.toFloat() else Float.NaN
 
                 val voltageMv = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
-                val voltage = if (voltageMv != -1) voltageMv / 1000.0f else Float.NaN
+                val voltage = if (voltageMv != -1) voltageMv * 1e-3f else Float.NaN
 
                 val tempTenths = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
-                val temperature = if (tempTenths != -1) tempTenths / 10.0f else Float.NaN
+                val temperature = if (tempTenths != -1) tempTenths * 1e-1f else Float.NaN
 
-                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
-                val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)
+                val statusCode = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
+                val status = when (statusCode) {
+                    BatteryManager.BATTERY_STATUS_CHARGING -> "charging"
+                    BatteryManager.BATTERY_STATUS_DISCHARGING -> "discharging"
+                    BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "not_charging"
+                    BatteryManager.BATTERY_STATUS_FULL -> "full"
+                    else -> "unknown"
+                }
+
+                val healthCode = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)
+                val health = when (healthCode) {
+                    BatteryManager.BATTERY_HEALTH_GOOD -> "good"
+                    BatteryManager.BATTERY_HEALTH_OVERHEAT -> "overheat"
+                    BatteryManager.BATTERY_HEALTH_DEAD -> "dead"
+                    BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "overvoltage"
+                    BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "unspecified_failure"
+                    BatteryManager.BATTERY_HEALTH_COLD -> "cold"
+                    else -> "unknown"
+                }
+
                 val present = intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true)
-                val tech = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: ""
+                val techRaw = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: ""
+                val tech = if (techRaw.isBlank()) "unknown" else techRaw.lowercase()
 
                 val bm = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
 
                 val currentUa = bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: 0
-                val current = if (currentUa != Int.MIN_VALUE && currentUa != 0) currentUa / 1_000_000.0f else Float.NaN
+                val current = if (currentUa != Int.MIN_VALUE && currentUa != 0) currentUa * 1e-6f else Float.NaN
 
                 val t = SystemClock.elapsedRealtimeNanos() + bootToEpochNanos
 
                 server.broadcast(
-                    """{"s":"battery","t":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":$status,"health":$health,"present":$present,"tech":"$tech"}"""
+                    """{"s":"battery","t":$t,"voltage":$voltage,"temperature":$temperature,"current":$current,"percentage":$percentage,"status":"$status","health":"$health","present":$present,"tech":"$tech"}"""
                 )
             }
         }
