@@ -154,7 +154,7 @@ class MobileSensors(Node):
             )
             self.pub_img[camera_name] = pub
 
-        pub.publish(frame_msg(sample, camera_name))
+        pub.publish(frame_msg(sample, f"camera_{camera_name}_optical_frame"))
 
     def _on_battery(self, sample):
         self.pub_battery.publish(battery_msg(sample))

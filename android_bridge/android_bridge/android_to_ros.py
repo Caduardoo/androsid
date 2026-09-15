@@ -80,10 +80,10 @@ def gps_msg(sample, frame_id):
     return msg
 
 
-def frame_msg(sample, camera_name):
+def frame_msg(sample, frame_id):
     msg = CompressedImage()
     msg.header.stamp = Time(nanoseconds=sample["stamp"]).to_msg()
-    msg.header.frame_id = f"camera_{camera_name}_optical_frame"
+    msg.header.frame_id = frame_id
     msg.format = "jpeg"
     msg.data = base64.b64decode(sample["data"])
     return msg
