@@ -117,18 +117,18 @@ class MobileSensors(Node):
 
             sample = json.loads(line)
             sample_type = sample.get("type")
-            if sample_type == "gps":
-                self._on_gps(sample)
-            elif sample_type == "accel":
+            if sample_type == "accel":
                 self._last_accel = sample["axes"]
             elif sample_type == "gyro":
                 self._on_imu(sample)
             elif sample_type == "mag":
                 self._on_mag(sample)
-            elif sample_type == "battery":
-                self._on_battery(sample)
+            elif sample_type == "gps":
+                self._on_gps(sample)
             elif sample_type == "frame":
                 self._on_frame(sample)
+            elif sample_type == "battery":
+                self._on_battery(sample)
 
     def _on_imu(self, sample):
         if self._last_accel is None:
