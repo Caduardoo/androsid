@@ -204,11 +204,10 @@ class MobileSensors(Node):
         msg.header.stamp = to_ros_time(sample["t"])
         msg.header.frame_id = self.imu_frame
 
-        # Android reports microtesla, ROS 2 uses with tesla
         mx, my, mz = android_to_flu(*sample["v"])
-        msg.magnetic_field.x = float(mx) * 1e-6
-        msg.magnetic_field.y = float(my) * 1e-6
-        msg.magnetic_field.z = float(mz) * 1e-6
+        msg.magnetic_field.x = float(mx)
+        msg.magnetic_field.y = float(my)
+        msg.magnetic_field.z = float(mz)
 
         self.pub_mag.publish(msg)
 

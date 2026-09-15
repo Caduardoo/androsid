@@ -293,15 +293,15 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
     // -------------------------------------------------------------- callbacks
 
     override fun onSensorChanged(event: SensorEvent) {
-        val name = when (event.sensor.type) {
-            Sensor.TYPE_ACCELEROMETER -> "accel"
-            Sensor.TYPE_GYROSCOPE     -> "gyro"
-            Sensor.TYPE_MAGNETIC_FIELD -> "mag"
+        val (name, scale) = when (event.sensor.type) {
+            Sensor.TYPE_ACCELEROMETER -> "accel" to 1.0f
+            Sensor.TYPE_GYROSCOPE     -> "gyro" to 1.0f
+            Sensor.TYPE_MAGNETIC_FIELD -> "mag" to 1e-6f // From uT to T
             else -> return
         }
         val t = event.timestamp + bootToEpochNanos
         server.broadcast(
-            """{"s":"$name","t":$t,"v":[${event.values[0]},${event.values[1]},${event.values[2]}]}"""
+            """{"s":"$name","t":$t,"v":[${event.values[0] * scale},${event.values[1] * scale},${event.values[2] * scale}]}"""
         )
     }
 
