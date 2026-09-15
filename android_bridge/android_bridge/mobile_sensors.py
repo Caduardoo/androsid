@@ -56,7 +56,6 @@ class MobileSensors(Node):
         self.pub_img = {}
 
         self._last_accel = None
-        self._logged_provider = False
 
         self._stop = threading.Event()
         self._sock = None
@@ -141,15 +140,6 @@ class MobileSensors(Node):
         self.pub_mag.publish(mag_msg(sample, self.imu_frame))
 
     def _on_gps(self, sample):
-        provider = sample.get("prov", "gps")
-
-        if not self._logged_provider:
-            self._logged_provider = True
-            self.get_logger().info(
-                f"first fix from '{provider}', "
-                f"horizontal accuracy {float(sample.get('acc', 0.0)):.1f} m"
-            )
-
         self.pub_gps.publish(gps_msg(sample, self.gps_frame))
 
     def _on_frame(self, sample):
