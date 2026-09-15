@@ -159,7 +159,7 @@ class MobileSensors(Node):
     def _on_battery(self, sample):
         self.pub_battery.publish(battery_msg(sample))
 
-    def send_command(self, cmd, params):
+    def _send_command(self, cmd, params):
         if params is None:
             params = {}
 
