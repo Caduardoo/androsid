@@ -192,11 +192,6 @@ class MobileSensors(Node):
     def _on_set_torch(self, request, response):
         success = self._send_command("torch", {"enabled": request.data})
         response.success = success
-        response.message = (
-            "Torch command dispatched"
-            if success
-            else "Failed to dispatch: TCP sock not connected"
-        )
         return response
 
 

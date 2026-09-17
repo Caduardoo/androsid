@@ -6,6 +6,7 @@ import android.graphics.YuvImage
 import android.util.Base64
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Camera
 import androidx.camera.core.ImageProxy
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
@@ -35,6 +36,14 @@ class CameraSource(
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
         .build()
         .also { it.setAnalyzer(executor) { image -> handleFrame(image) } }
+    
+    var camera: Camera? = null
+    
+    fun hasFlashUnit(): Boolean = camera?.cameraInfo?.hasFlashUnit() == true
+
+    fun setTorch(enabled: Boolean) {
+        camera?.cameraControl?.enableTorch(enabled)
+    }
 
     fun stop() {
         executor.shutdown()

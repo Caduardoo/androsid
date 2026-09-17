@@ -72,17 +72,14 @@ If everything is working correctly, the bridge node should be publishing on the 
 - `/camera/<name>/image_raw/compressed`
 - `/battery_state`
 
+And serves the following service:
+
+- `/set_torch`
+
 You may customize each topic QoS profile by modifying `android_bridge/config/mobile_sensors.yaml`:
 
 ```bash
 ros2 run android_bridge mobile_sensors --ros-args --params-file \
   $(ros2 pkg prefix android_bridge)/share/android_bridge/config/mobile_sensors.yaml
 ```
-
-#### Services
-- `/set_torch` (`android_interfaces/srv/SetTorch`): Turns the device flashlight on (true) or off (false).
-```bash
-ros2 service call /set_torch android_interfaces/srv/SetTorch "{data: true}"
-```
-
 ---
