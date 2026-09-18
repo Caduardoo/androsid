@@ -82,4 +82,5 @@ You may customize each topic QoS profile by modifying `android_bridge/config/mob
 ros2 run android_bridge mobile_sensors --ros-args --params-file \
   $(ros2 pkg prefix android_bridge)/share/android_bridge/config/mobile_sensors.yaml
 ```
+
 ---
