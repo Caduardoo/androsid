@@ -214,8 +214,8 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         }
 
         val concurrentCamera = provider.bindToLifecycle(singleConfigs)
-        concurrentCamera.cameras.forEachIndexed { index, cam ->
-            cameras.getOrNull(index)?.camera = cam        
+        concurrentCamera.cameras.forEachIndexed { 
+            index, cam -> cameras.getOrNull(index)?.attachCamera(cam)        
         }
         Log.i(TAG, "cameras bound: $names")
     }
@@ -241,7 +241,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
         cameras = mutableListOf(source)
 
         val camera = provider.bindToLifecycle(this, selector, source.imageAnalysis)
-        source.camera = camera
+        source.attachCamera(camera)
         Log.i(TAG, "camera bound: $name")
     }
 
@@ -380,8 +380,8 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
     
     // ----------------------------------------------------------- commands
 
-    private fun setTorch(enabled: Boolean) {
-        val target = cameras.firstOrNull { it.hasFlashUnit() }
+    private fun handleTorch(enabled: Boolean) {
+        val target = cameras.firstOrNull { it.hasFlashUnit }
         if (target != null) {
             target.setTorch(enabled)
             Log.i(TAG, "Torch state set to: $enabled")
@@ -398,7 +398,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
             when (cmd) {
                 "torch" -> {
                     val enabled = json.optBoolean("enabled", false)
-                    setTorch(enabled)
+                    handleTorch(enabled)
                 }
                 else -> {
                     Log.w(TAG, "Unknown or unhandled command received: $cmd")

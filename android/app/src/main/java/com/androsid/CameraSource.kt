@@ -37,9 +37,15 @@ class CameraSource(
         .build()
         .also { it.setAnalyzer(executor) { image -> handleFrame(image) } }
     
-    var camera: Camera? = null
+    private var camera: Camera? = null
     
-    fun hasFlashUnit(): Boolean = camera?.cameraInfo?.hasFlashUnit() == true
+    var hasFlashUnit: Boolean = false
+        private set
+    
+    fun attachCamera(camera: Camera) {
+        this.camera = camera
+        this.hasFlashUnit = camera.cameraInfo.hasFlashUnit()
+    }
 
     fun setTorch(enabled: Boolean) {
         camera?.cameraControl?.enableTorch(enabled)
