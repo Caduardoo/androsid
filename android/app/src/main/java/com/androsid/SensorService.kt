@@ -215,7 +215,7 @@ class SensorService : LifecycleService(), SensorEventListener, LocationListener 
 
         val concurrentCamera = provider.bindToLifecycle(singleConfigs)
         concurrentCamera.cameras.forEachIndexed { 
-            index, cam -> cameras.getOrNull(index)?.attachCamera(cam)        
+            index, cam -> cameras.getOrNull(index)?.attachCamera(cam)
         }
         Log.i(TAG, "cameras bound: $names")
     }
