@@ -190,8 +190,7 @@ class MobileSensors(Node):
             return False
 
     def _on_set_torch(self, request, response):
-        success = self._send_command("torch", {"enabled": request.data})
-        response.success = success
+        response.success = self._send_command("torch", {"enabled": request.data})
         return response
 
 
